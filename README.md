@@ -51,6 +51,17 @@ The recommendation engine converts high-risk operational patterns into action-fo
 - Equipment inspection follow-up
 - Receiving, putaway, replenishment, picking, and shipping SOP checks
 
+## SQL Analytics Layer
+The project also includes SQL Server scripts for:
+- Table creation
+- CSV import guidance
+- KPI analysis
+- Process area analysis
+- SKU, category, and aisle analysis
+- Damage source and equipment analysis
+- High-priority action list
+- Savings scenarios
+
 ## Business Impact
 The dashboard estimates potential savings from reducing damage cost by 10%, 15%, and 20%. This helps connect operational improvements to financial outcomes.
 
@@ -62,8 +73,12 @@ warehouse-damage-intelligence/
 |-- requirements.txt
 |-- README.md
 |-- .gitignore
-`-- data/
-    `-- warehouse_damage_data.csv
+|-- data/
+|   `-- warehouse_damage_data.csv
+`-- sql/
+    |-- create_warehouse_damage_table.sql
+    |-- warehouse_damage_analysis.sql
+    `-- README_SQL.md
 ```
 
 ## How to Run
