@@ -111,3 +111,18 @@ streamlit run app.py
 Run `python -m unittest discover -s tests -v` to verify that training and prediction do not require damage source, changing it cannot change predictions, and historical source-based recommendations remain available.
 
 The model uses synthetic data and a random holdout. These scores do not establish real-world prevention performance; validate input timing and use a time-based pilot evaluation before deployment.
+
+## Picking Order Review
+Launch `streamlit run app.py`, then choose **Picking Order Review** in the sidebar or use the dashboard link. The review page also works without the damage-history CSV.
+
+- Start with the synthetic example, or upload a CSV matching `data/picking_order_sample.csv`.
+- Each row is one SKU in an assignment and zone. Supply unique assignment IDs across dates and unique positive integer pick positions within each assignment/zone.
+- Required fields: assignment_id, zone, sku, description, pick_position, quantity, weight_kg, length_cm, width_cm, height_cm, crushability.
+- Case weight is kg; dimensions are cm; quantity is a positive integer; crushability ranges from 0 to 1. Maximum 2,000 rows and 100 lines per assignment/zone.
+- The rule flags any earlier case with crushability at least 0.6 followed by a case more than 1.5 times as heavy, including nonadjacent pairs.
+- The heuristic sorts by increasing crushability then decreasing weight, reusing positions within each assignment/zone. It retains the baseline unless flagged pairs decrease. Case quantities and zone membership stay unchanged.
+- View current/proposed case-weight charts and download the QA sequence report, current concerns/actions, and remaining proposed concerns.
+
+These are picking-sequence suggestions for QA review, not executable slot moves. Dimensions and quantities are retained for inspection but are not used for layer packing, slot compatibility or cumulative load calculations. Pick order does not prove physical stacking or pallet safety. No optimality, measured damage reduction or financial savings is claimed.
+
+The seven-row synthetic example contains four flagged pairs before review and zero afterward under this rule. Local testing: `python -m unittest discover -s tests -v` includes a Streamlit page smoke test.
