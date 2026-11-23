@@ -4,7 +4,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pandas as pd
 import streamlit as st
-from picking_review import review, sample_data, csv_bytes, REQUIRED
+from picking_review import review, sample_data, csv_bytes, REQUIRED, read_order_csv
 
 st.set_page_config(page_title='Picking Order Review', layout='wide')
 st.title('Picking Order Review')
@@ -26,7 +26,7 @@ upload = None if use_demo else st.file_uploader('Upload order lines (CSV)', type
 if not use_demo and upload is None:
     st.stop()
 try:
-    data = sample_data() if use_demo else pd.read_csv(upload, dtype={c: str for c in REQUIRED[:4]})
+    data = sample_data() if use_demo else read_order_csv(upload)
     comparison, before, after = review(data)
 except (ValueError, pd.errors.ParserError, UnicodeError) as error:
     st.error(str(error))
