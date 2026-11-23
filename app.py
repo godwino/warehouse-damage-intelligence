@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from hashlib import sha256
 from pathlib import Path
 from typing import List
 
@@ -89,7 +90,13 @@ def load_data() -> pd.DataFrame:
     return data
 
 
-@st.cache_resource
+def training_data_digest(data: pd.DataFrame) -> str:
+    """Hash all values and schema without Streamlit's pandas hashing path."""
+    payload = data.to_json(orient="table", date_format="iso", date_unit="ns", double_precision=15)
+    return sha256(payload.encode("utf-8")).hexdigest()
+
+
+@st.cache_resource(hash_funcs={pd.DataFrame: training_data_digest})
 def train_model(data: pd.DataFrame) -> dict:
     X = data[FEATURE_COLUMNS]
     y = data["high_damage"]
