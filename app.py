@@ -66,7 +66,6 @@ FEATURE_COLUMNS = [
     "slot_level",
     "shift",
     "process_area",
-    "damage_source",
     "equipment_type",
     "handling_stage",
     "congestion_level",
@@ -101,7 +100,6 @@ def train_model(data: pd.DataFrame) -> dict:
         "slot_level",
         "shift",
         "process_area",
-        "damage_source",
         "equipment_type",
         "handling_stage",
         "congestion_level",
@@ -167,7 +165,7 @@ def format_percent(value: float) -> str:
 
 def recommendation_text(row: pd.Series | dict) -> str:
     actions: List[str] = []
-    damage_source = row["damage_source"]
+    damage_source = row.get("damage_source", "Unknown")
     category = row["category"]
     process_area = row["process_area"]
     equipment_type = row["equipment_type"]
@@ -493,6 +491,10 @@ def show_model_section(model_artifacts: dict) -> None:
 
 def show_prediction_tool(model: Pipeline) -> None:
     st.header("8. Prediction Tool")
+    st.caption(
+        "Synthetic-data demonstration. Enter conditions known before handling; use planned cases handled. "
+        "Recorded damage source is used only for historical analysis and corrective actions."
+    )
     with st.form("prediction_form"):
         col1, col2, col3, col4 = st.columns(4)
 
@@ -503,7 +505,6 @@ def show_prediction_tool(model: Pipeline) -> None:
             shift = st.selectbox("Shift", SHIFTS)
         with col2:
             process_area = st.selectbox("Process Area", PROCESS_AREAS)
-            damage_source = st.selectbox("Damage Source", DAMAGE_SOURCES)
             equipment_type = st.selectbox("Equipment Type", EQUIPMENT_TYPES)
             handling_stage = st.selectbox("Handling Stage", HANDLING_STAGES)
         with col3:
@@ -528,7 +529,6 @@ def show_prediction_tool(model: Pipeline) -> None:
                     "slot_level": slot_level,
                     "shift": shift,
                     "process_area": process_area,
-                    "damage_source": damage_source,
                     "equipment_type": equipment_type,
                     "handling_stage": handling_stage,
                     "congestion_level": congestion_level,
@@ -549,7 +549,6 @@ def show_prediction_tool(model: Pipeline) -> None:
                 "category": category,
                 "slot_level": slot_level,
                 "process_area": process_area,
-                "damage_source": damage_source,
                 "equipment_type": equipment_type,
                 "congestion_level": congestion_level,
                 "pallet_stability": pallet_stability,
