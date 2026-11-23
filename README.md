@@ -41,6 +41,8 @@ The app trains a `RandomForestClassifier` to predict whether a record is high da
 - `Pipeline`
 - `RandomForestClassifier`
 
+`damage_source` is excluded from training and the prediction form because it is recorded after an incident. It remains available for historical analysis and corrective actions. Prediction-time recommendations use only entered operational conditions. Other inputs must be recorded before handling; `cases_handled` represents planned volume when scoring.
+
 The model reports accuracy, precision, recall, F1 score, confusion matrix, classification report, and feature importance.
 
 ## Recommendation Engine
@@ -104,3 +106,8 @@ streamlit run app.py
 - Add weekly management report
 - Add root cause investigation workflow
 - Add before/after damage reduction tracking
+
+## Regression Checks
+Run `python -m unittest discover -s tests -v` to verify that training and prediction do not require damage source, changing it cannot change predictions, and historical source-based recommendations remain available.
+
+The model uses synthetic data and a random holdout. These scores do not establish real-world prevention performance; validate input timing and use a time-based pilot evaluation before deployment.
