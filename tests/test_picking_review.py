@@ -1,6 +1,7 @@
 import unittest
+from io import StringIO
 import pandas as pd
-from picking_review import review, sample_data, csv_bytes
+from picking_review import review, sample_data, csv_bytes, read_order_csv
 
 class PickingReviewTests(unittest.TestCase):
     def test_demo_improves_without_crossing_zones_or_changing_workload(self):
@@ -52,5 +53,18 @@ class PickingReviewTests(unittest.TestCase):
         content = csv_bytes(pd.DataFrame({'sku': ['=1+1', '001'], 'quantity': [2, 3]})).decode('utf-8-sig')
         self.assertIn("'=1+1", content)
         self.assertIn('001', content)
+
+    def test_csv_keeps_literal_identifiers_and_rejects_oversize(self):
+        data = sample_data().iloc[:1].copy()
+        data['sku'] = '001'
+        data['zone'] = 'NA'
+        parsed = read_order_csv(StringIO(data.to_csv(index=False)))
+        self.assertEqual(parsed.loc[0, 'sku'], '001')
+        self.assertEqual(parsed.loc[0, 'zone'], 'NA')
+        review(parsed)
+        large = pd.concat([data] * 2002, ignore_index=True)
+        parsed = read_order_csv(StringIO(large.to_csv(index=False)))
+        self.assertEqual(len(parsed), 2001)
+        with self.assertRaises(ValueError): review(parsed)
 
 if __name__ == '__main__': unittest.main()
