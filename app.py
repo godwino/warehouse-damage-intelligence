@@ -601,6 +601,8 @@ def main() -> None:
         "A supply chain analytics and machine learning tool for identifying warehouse damage hotspots, process risk, and prevention actions."
     )
 
+    st.page_link("pages/1_Picking_Order_Review.py", label="Open Picking Order Review")
+
     if not DATA_PATH.exists():
         st.error("Dataset not found. Run `python generate_data.py` to create `data/warehouse_damage_data.csv`.")
         st.stop()
