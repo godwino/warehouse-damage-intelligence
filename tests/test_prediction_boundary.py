@@ -44,6 +44,14 @@ class PredictionBoundaryTests(unittest.TestCase):
             cls.data.drop(columns=["damage_source"])
         )
 
+    def test_recommendation_rate_is_weighted_by_handled_cases(self):
+        data = self.data.iloc[[0, 0]].copy()
+        data['damaged_cases'] = [1, 9]
+        data['cases_handled'] = [2, 98]
+        data['damage_rate'] = [.5, 9 / 98]
+        result = self.functions['build_recommendations'](data)
+        self.assertEqual(result.iloc[0]['damage_rate'], .1)
+
     def test_model_excludes_incident_outcomes(self):
         columns = set(self.artifacts["model"].feature_names_in_)
         self.assertTrue(columns.isdisjoint({
@@ -95,3 +103,4 @@ class PredictionBoundaryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
