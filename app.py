@@ -22,7 +22,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 
-DATA_PATH = Path("data/warehouse_damage_data.csv")
+DATA_PATH = Path(__file__).resolve().parent / "data/warehouse_damage_data.csv"
 
 CATEGORIES = [
     "Grocery",
@@ -225,11 +225,13 @@ def build_recommendations(data: pd.DataFrame) -> pd.DataFrame:
     grouped = (
         data.groupby(recommendation_columns, as_index=False)
         .agg(
-            damage_rate=("damage_rate", "mean"),
+            damaged_cases=("damaged_cases", "sum"),
+            cases_handled=("cases_handled", "sum"),
             damage_cost=("damage_cost", "sum"),
             weight_lbs=("weight_lbs", "mean"),
             slot_level=("slot_level", lambda values: values.mode().iloc[0] if not values.mode().empty else "Mid"),
         )
+        .assign(damage_rate=lambda frame: frame["damaged_cases"] / frame["cases_handled"].where(frame["cases_handled"].gt(0)))
         .sort_values(["damage_cost", "damage_rate"], ascending=[False, False])
     )
 
@@ -310,8 +312,8 @@ def show_damage_hotspots(data: pd.DataFrame) -> None:
     fig_aisle_cost = px.bar(by_aisle_cost, x="aisle", y="damage_cost", title="Damage Cost by Aisle")
 
     with col1:
-        st.plotly_chart(fig_skus, use_container_width=True)
-        st.plotly_chart(fig_aisle_cost, use_container_width=True)
+        st.plotly_chart(fig_skus, width="stretch")
+        st.plotly_chart(fig_aisle_cost, width="stretch")
 
     by_aisle_rate = (
         data.groupby("aisle", as_index=False)
@@ -324,12 +326,12 @@ def show_damage_hotspots(data: pd.DataFrame) -> None:
     fig_trend = px.line(daily_trend, x="date", y="damage_cost", title="Damage Trend Over Time")
 
     with col2:
-        st.plotly_chart(fig_aisle_rate, use_container_width=True)
-        st.plotly_chart(fig_trend, use_container_width=True)
+        st.plotly_chart(fig_aisle_rate, width="stretch")
+        st.plotly_chart(fig_trend, width="stretch")
 
     damage_type_breakdown = data.groupby("damage_type", as_index=False)["damaged_cases"].sum()
     fig_damage_type = px.pie(damage_type_breakdown, names="damage_type", values="damaged_cases", title="Damage Type Breakdown")
-    st.plotly_chart(fig_damage_type, use_container_width=True)
+    st.plotly_chart(fig_damage_type, width="stretch")
 
 
 def show_process_area_analysis(data: pd.DataFrame) -> None:
@@ -347,12 +349,12 @@ def show_process_area_analysis(data: pd.DataFrame) -> None:
     )
 
     with col1:
-        st.plotly_chart(px.bar(area_summary, x="process_area", y="damage_cost", title="Damage Cost by Process Area"), use_container_width=True)
-        st.plotly_chart(px.bar(area_summary, x="process_area", y="damaged_cases", title="Damaged Cases by Process Area"), use_container_width=True)
+        st.plotly_chart(px.bar(area_summary, x="process_area", y="damage_cost", title="Damage Cost by Process Area"), width="stretch")
+        st.plotly_chart(px.bar(area_summary, x="process_area", y="damaged_cases", title="Damaged Cases by Process Area"), width="stretch")
     with col2:
-        st.plotly_chart(px.bar(area_summary, x="process_area", y="damage_rate_pct", title="Damage Rate by Process Area"), use_container_width=True)
+        st.plotly_chart(px.bar(area_summary, x="process_area", y="damage_rate_pct", title="Damage Rate by Process Area"), width="stretch")
         trend = data.groupby(["date", "process_area"], as_index=False)["damage_cost"].sum()
-        st.plotly_chart(px.line(trend, x="date", y="damage_cost", color="process_area", title="Damage Trend by Process Area"), use_container_width=True)
+        st.plotly_chart(px.line(trend, x="date", y="damage_cost", color="process_area", title="Damage Trend by Process Area"), width="stretch")
 
     highest_area = area_summary.sort_values("damage_cost", ascending=False).iloc[0]
     lowest_area = area_summary.sort_values("damage_rate_pct", ascending=True).iloc[0]
@@ -373,7 +375,8 @@ def show_sku_category_analysis(data: pd.DataFrame) -> None:
     )
     high_risk_skus = (
         data.groupby(["sku", "description"], as_index=False)
-        .agg(damage_rate=("damage_rate", "mean"), damage_cost=("damage_cost", "sum"))
+        .agg(damaged_cases=("damaged_cases", "sum"), cases_handled=("cases_handled", "sum"), damage_cost=("damage_cost", "sum"))
+        .assign(damage_rate=lambda frame: frame["damaged_cases"] / frame["cases_handled"].where(frame["cases_handled"].gt(0)))
         .sort_values(["damage_rate", "damage_cost"], ascending=[False, False])
         .head(10)
     )
@@ -384,11 +387,11 @@ def show_sku_category_analysis(data: pd.DataFrame) -> None:
     )
 
     with col1:
-        st.plotly_chart(px.bar(category_summary, x="category", y="damage_rate_pct", title="Damage Rate by Category"), use_container_width=True)
-        st.plotly_chart(px.bar(category_summary, x="category", y="damage_cost", title="Damage Cost by Category"), use_container_width=True)
+        st.plotly_chart(px.bar(category_summary, x="category", y="damage_rate_pct", title="Damage Rate by Category"), width="stretch")
+        st.plotly_chart(px.bar(category_summary, x="category", y="damage_cost", title="Damage Cost by Category"), width="stretch")
     with col2:
-        st.plotly_chart(px.bar(high_risk_skus, x="damage_rate", y="sku", orientation="h", title="Top 10 High-Risk SKUs"), use_container_width=True)
-        st.plotly_chart(px.bar(slot_rate, x="slot_level", y="damage_rate_pct", title="Slot Level vs Damage Rate"), use_container_width=True)
+        st.plotly_chart(px.bar(high_risk_skus, x="damage_rate", y="sku", orientation="h", title="Top 10 High-Risk SKUs"), width="stretch")
+        st.plotly_chart(px.bar(slot_rate, x="slot_level", y="damage_rate_pct", title="Slot Level vs Damage Rate"), width="stretch")
 
     heatmap_data = (
         data.groupby(["category", "slot_level"], as_index=False)
@@ -405,7 +408,7 @@ def show_sku_category_analysis(data: pd.DataFrame) -> None:
         )
     )
     heatmap.update_layout(title="Category and Slot Level Heatmap")
-    st.plotly_chart(heatmap, use_container_width=True)
+    st.plotly_chart(heatmap, width="stretch")
 
 
 def show_equipment_source_analysis(data: pd.DataFrame) -> None:
@@ -418,11 +421,11 @@ def show_equipment_source_analysis(data: pd.DataFrame) -> None:
     equipment_area = data.groupby(["process_area", "equipment_type"], as_index=False)["damage_cost"].sum()
 
     with col1:
-        st.plotly_chart(px.bar(equipment_cost, x="equipment_type", y="damage_cost", title="Damage Cost by Equipment Type"), use_container_width=True)
-        st.plotly_chart(px.bar(source_count, x="damage_source", y="damage_count", title="Damage Count by Damage Source"), use_container_width=True)
+        st.plotly_chart(px.bar(equipment_cost, x="equipment_type", y="damage_cost", title="Damage Cost by Equipment Type"), width="stretch")
+        st.plotly_chart(px.bar(source_count, x="damage_source", y="damage_count", title="Damage Count by Damage Source"), width="stretch")
     with col2:
-        st.plotly_chart(px.bar(source_area, x="process_area", y="damage_cost", color="damage_source", title="Damage Source by Process Area"), use_container_width=True)
-        st.plotly_chart(px.bar(equipment_area, x="process_area", y="damage_cost", color="equipment_type", title="Equipment Type by Process Area"), use_container_width=True)
+        st.plotly_chart(px.bar(source_area, x="process_area", y="damage_cost", color="damage_source", title="Damage Source by Process Area"), width="stretch")
+        st.plotly_chart(px.bar(equipment_area, x="process_area", y="damage_cost", color="equipment_type", title="Equipment Type by Process Area"), width="stretch")
 
 
 def show_operational_risk_analysis(data: pd.DataFrame) -> None:
@@ -444,13 +447,13 @@ def show_operational_risk_analysis(data: pd.DataFrame) -> None:
     slotting = risk_summary("slotting_risk")
 
     with col1:
-        st.plotly_chart(px.bar(congestion, x="congestion_level", y="damage_rate_pct", title="Damage Rate by Congestion Level"), use_container_width=True)
-        st.plotly_chart(px.bar(pallet, x="pallet_stability", y="damage_rate_pct", title="Damage Rate by Pallet Stability"), use_container_width=True)
-        st.plotly_chart(px.bar(equipment, x="equipment_condition", y="damage_rate_pct", title="Damage Rate by Equipment Condition"), use_container_width=True)
+        st.plotly_chart(px.bar(congestion, x="congestion_level", y="damage_rate_pct", title="Damage Rate by Congestion Level"), width="stretch")
+        st.plotly_chart(px.bar(pallet, x="pallet_stability", y="damage_rate_pct", title="Damage Rate by Pallet Stability"), width="stretch")
+        st.plotly_chart(px.bar(equipment, x="equipment_condition", y="damage_rate_pct", title="Damage Rate by Equipment Condition"), width="stretch")
     with col2:
-        st.plotly_chart(px.bar(slotting, x="slotting_risk", y="damage_rate_pct", title="Damage Rate by Slotting Risk"), use_container_width=True)
-        st.plotly_chart(px.bar(congestion, x="congestion_level", y="damage_cost", title="Damage Cost by Congestion Level"), use_container_width=True)
-        st.plotly_chart(px.bar(pallet, x="pallet_stability", y="damage_cost", title="Damage Cost by Pallet Stability"), use_container_width=True)
+        st.plotly_chart(px.bar(slotting, x="slotting_risk", y="damage_rate_pct", title="Damage Rate by Slotting Risk"), width="stretch")
+        st.plotly_chart(px.bar(congestion, x="congestion_level", y="damage_cost", title="Damage Cost by Congestion Level"), width="stretch")
+        st.plotly_chart(px.bar(pallet, x="pallet_stability", y="damage_cost", title="Damage Cost by Pallet Stability"), width="stretch")
 
 
 def show_model_section(model_artifacts: dict) -> None:
@@ -474,7 +477,7 @@ def show_model_section(model_artifacts: dict) -> None:
         )
     )
     cm_fig.update_layout(title="Confusion Matrix")
-    st.plotly_chart(cm_fig, use_container_width=True)
+    st.plotly_chart(cm_fig, width="stretch")
 
     st.subheader("Classification Report")
     st.text(model_artifacts["classification_report"])
@@ -486,7 +489,7 @@ def show_model_section(model_artifacts: dict) -> None:
         orientation="h",
         title="Top 15 Feature Importances",
     )
-    st.plotly_chart(importance_fig, use_container_width=True)
+    st.plotly_chart(importance_fig, width="stretch")
 
 
 def show_prediction_tool(model: Pipeline) -> None:
@@ -513,7 +516,7 @@ def show_prediction_tool(model: Pipeline) -> None:
             equipment_condition = st.selectbox("Equipment Condition", EQUIPMENT_CONDITIONS)
             slotting_risk = st.selectbox("Slotting Risk", SLOTTING_RISK)
         with col4:
-            cases_handled = st.number_input("Cases Handled", min_value=1, value=60, step=1)
+            cases_handled = st.number_input("Planned Cases to Handle", min_value=1, value=60, step=1)
             weight_lbs = st.number_input("Weight (lbs)", min_value=1.0, value=30.0, step=1.0)
             cube = st.number_input("Cube", min_value=0.1, value=1.2, step=0.1)
             cost_per_case = st.number_input("Cost per Case", min_value=1.0, value=24.0, step=1.0)
@@ -567,15 +570,16 @@ def show_prediction_tool(model: Pipeline) -> None:
 def show_recommendations(data: pd.DataFrame) -> None:
     st.header("9. Recommendations")
     recommendations = build_recommendations(data)
-    st.dataframe(recommendations, use_container_width=True, hide_index=True)
+    st.dataframe(recommendations, width="stretch", hide_index=True)
 
 
 def show_business_impact(data: pd.DataFrame) -> None:
     st.header("10. Business Impact Summary")
+    st.caption("Illustrative savings scenarios based on synthetic damage cost; these are not measured savings.")
     current_cost = float(data["damage_cost"].sum())
     scenarios = pd.DataFrame(
         {
-            "Scenario": ["Current Damage Cost", "10% Reduction", "15% Reduction", "20% Reduction"],
+            "Scenario": ["Current Damage Cost", "Potential Savings at 10%", "Potential Savings at 15%", "Potential Savings at 20%"],
             "Value": [
                 current_cost,
                 current_cost * 0.10,
@@ -597,9 +601,12 @@ def show_business_impact(data: pd.DataFrame) -> None:
 
 def main() -> None:
     st.title("Warehouse Damage Intelligence Dashboard")
+    st.caption("Synthetic-data demonstration. Model scores and cost scenarios require validation on real warehouse data.")
     st.write(
         "A supply chain analytics and machine learning tool for identifying warehouse damage hotspots, process risk, and prevention actions."
     )
+
+    st.page_link("pages/1_Picking_Order_Review.py", label="Open Picking Order Review")
 
     if not DATA_PATH.exists():
         st.error("Dataset not found. Run `python generate_data.py` to create `data/warehouse_damage_data.csv`.")
@@ -622,3 +629,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
