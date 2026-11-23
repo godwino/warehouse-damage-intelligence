@@ -1,0 +1,8 @@
+﻿assignment_id,zone,sku,description,pick_position,quantity,weight_kg,length_cm,width_cm,height_cm,crushability
+A001,Zone 1,CHIPS,Potato chips,1,2,3,40,30,25,0.95
+A001,Zone 1,WATER,Bottled water,2,2,22,40,30,25,0.1
+A001,Zone 1,RICE,Rice bags,3,2,18,40,30,25,0.25
+A002,Zone 2,CEREAL,Breakfast cereal,1,2,4,40,30,25,0.85
+A002,Zone 2,JUICE,Juice cases,2,2,16,40,30,25,0.2
+A003,Zone 5,POUCH,Pet food pouches,1,2,5,40,30,25,0.7
+A003,Zone 5,DOG,Dog food bags,2,2,20,40,30,25,0.3
