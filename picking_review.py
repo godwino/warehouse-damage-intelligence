@@ -8,6 +8,12 @@ NUMERIC = REQUIRED[4:]
 FLAG_COLUMNS = ['assignment_id', 'zone', 'earlier_sku', 'later_sku', 'reason', 'action']
 
 
+def read_order_csv(source):
+    """Bound parsing and preserve identifiers such as 001 and NA."""
+    return pd.read_csv(source, dtype={c: str for c in REQUIRED[:4]},
+                       keep_default_na=False, nrows=2001)
+
+
 def validate(data):
     missing = set(REQUIRED) - set(data.columns)
     if missing:
