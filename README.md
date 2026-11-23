@@ -126,3 +126,8 @@ Launch `streamlit run app.py`, then choose **Picking Order Review** in the sideb
 These are picking-sequence suggestions for QA review, not executable slot moves. Dimensions and quantities are retained for inspection but are not used for layer packing, slot compatibility or cumulative load calculations. Pick order does not prove physical stacking or pallet safety. No optimality, measured damage reduction or financial savings is claimed.
 
 The seven-row synthetic example contains four flagged pairs before review and zero afterward under this rule. Local testing: `python -m unittest discover -s tests -v` includes a Streamlit page smoke test.
+
+## Dashboard verification
+The dashboard uses handled-case totals for grouped damage rates, labels savings as illustrative, and resolves its dataset relative to the application file. CSV import preserves literal identifiers (including leading zeros and NA) and reads at most 2,001 rows before enforcing the 2,000-row limit.
+
+Run `python -m unittest discover -s tests -v` after installing requirements. The 15 checks include the full dashboard and prediction form, picking review interactions, weighted damage rates, upload limits, and the prediction leakage regression tests. The UI was exercised with Streamlit 1.67.0.
